@@ -294,6 +294,23 @@ class WC_Gateway_IslandPaySD extends WC_Payment_Gateway
             return;
         }
 
+        $check_order_url = $this->response_url; // http://yoursite.com/?wc-api=CALLBACK
+
+        // both http://yoursite.com/?wc-api=CALLBACK or http://yoursite.com/wc-api/CALLBACK/ is valid
+        if (strrpos($check_order_url, '?') === false) {
+            $subs_order_url = $check_order_url . '?oid=' . $order_id;
+        } else {
+            $subs_order_url = $check_order_url . '&oid=' . $order_id;
+        }
+        if (strrpos($check_order_url, '?') === false) {
+            $check_order_url .= '?check_status=1&oid=' . $order_id;
+        } else {
+            $check_order_url .= '&check_status=1&oid=' . $order_id;
+        }
+
+        $order_received_url         = $order->get_checkout_order_received_url();
+        $order_checkout_payment_url = $order->get_checkout_payment_url(true);
+
         print '
 		<div class="islandpay-wrapper">
 			<style type="text/css">
@@ -360,8 +377,124 @@ class WC_Gateway_IslandPaySD extends WC_Payment_Gateway
                     box-shadow: none;
                     display:block;
                 }
+
+                #islandpay-widget > div.subscription, 
+				#islandpay-widget > div.subscription > div.subscription-buttons {
+                    width: 100%;
+                    margin-top: 0;
+                    margin-bottom: 0;
+                    margin-left: auto;
+                    margin-right: auto;
+                    padding: 0;
+                    background:transparent;
+                    box-sizing: content-box;
+                    box-shadow: none;
+                    display:block;
+                }
+				#islandpay-widget > div.subscription > div.subscription-buttons > div.pay-button {
+                    display: inline-block;
+                    width: 50%;
+                    margin-left: auto;
+                    margin-right: auto;
+                    border: 1px solid white;
+                    border-radius: 10px;
+                    padding: 10px;
+                    cursor: pointer;
+                }
+				#islandpay-widget > div.subscription > div.subscription-buttons > div.pay-button-active {
+                    display: inline-block;
+                    width: 50%;
+                    margin-left: auto;
+                    margin-right: auto;
+                    border: 1px solid #13395e;
+                    border-radius: 10px;
+                    padding: 10px;
+                    cursor: pointer;
+                    background-color: white;
+                }
+				#islandpay-widget > div.pay-button > span {
+                    color: white !important;
+                    display: inline-block;
+                    margin-bottom: 0.5em;
+                }
+				#islandpay-widget > div.pay-button-active > span {
+                    color: #13395e !important;
+                    display: inline-block;
+                    margin-bottom: 0.5em;
+                }
 			</style>
+            <script type="text/javascript">
+                function setSubscriptionNone() {
+                    jQuery.get("' . $subs_order_url . '&subscription=true&recurrency=0", function(r) {
+                        var subNone = document.getElementById("subscription-none");
+                        var subDaily = document.getElementById("subscription-daily");
+                        var subWeekly = document.getElementById("subscription-weekly");
+                        var subMonthly = document.getElementById("subscription-monthly");
+                        subNone.classList.remove("pay-button-active");
+                        subDaily.classList.remove("pay-button-active");
+                        subWeekly.classList.remove("pay-button-active");
+                        subMonthly.classList.remove("pay-button-active");
+                        subNone.classList.add("pay-button-active");
+                    },"json");
+                }
+                function setSubscriptionDaily() {
+                    jQuery.get("' . $subs_order_url . '&subscription=true&recurrency=10", function(r) {
+                        var subNone = document.getElementById("subscription-none");
+                        var subDaily = document.getElementById("subscription-daily");
+                        var subWeekly = document.getElementById("subscription-weekly");
+                        var subMonthly = document.getElementById("subscription-monthly");
+                        subNone.classList.remove("pay-button-active");
+                        subDaily.classList.remove("pay-button-active");
+                        subWeekly.classList.remove("pay-button-active");
+                        subMonthly.classList.remove("pay-button-active");
+                        subDaily.classList.add("pay-button-active");
+                    },"json");
+                }
+                function setSubscriptionWeekly() {
+                    jQuery.get("' . $subs_order_url . '&subscription=true&recurrency=20", function(r) {
+                        var subNone = document.getElementById("subscription-none");
+                        var subDaily = document.getElementById("subscription-daily");
+                        var subWeekly = document.getElementById("subscription-weekly");
+                        var subMonthly = document.getElementById("subscription-monthly");
+                        subNone.classList.remove("pay-button-active");
+                        subDaily.classList.remove("pay-button-active");
+                        subWeekly.classList.remove("pay-button-active");
+                        subMonthly.classList.remove("pay-button-active");
+                        subWeekly.classList.add("pay-button-active");
+                    },"json");
+                }
+                function setSubscriptionMonthly() {
+                    jQuery.get("' . $subs_order_url . '&subscription=true&recurrency=40", function(r) {
+                        var subNone = document.getElementById("subscription-none");
+                        var subDaily = document.getElementById("subscription-daily");
+                        var subWeekly = document.getElementById("subscription-weekly");
+                        var subMonthly = document.getElementById("subscription-monthly");
+                        subNone.classList.remove("pay-button-active");
+                        subDaily.classList.remove("pay-button-active");
+                        subWeekly.classList.remove("pay-button-active");
+                        subMonthly.classList.remove("pay-button-active");
+                        subMonthly.classList.add("pay-button-active");
+                    },"json");
+                }
+            </script>
             <div id="islandpay-widget" style="margin:0 auto;text-align: center; border:none">
+                <div class="subscription">
+                    Do you want to subscribe this order?
+                    <div class="subscription-buttons">
+                        <div id="subscription-none" class="pay-button pay-button-active" onclick="setSubscriptionNone()">
+                            <span>None</span>
+                        </div>
+                        <div id="subscription-daily" class="pay-button" onclick="setSubscriptionDaily()">
+                            <span>Daily</span>
+                        </div>
+                        <div id="subscription-weekly" class="pay-button" onclick="setSubscriptionWeekly()">
+                            <span>Weekly</span>
+                        </div>
+                        <div id="subscription-monthly" class="pay-button" onclick="setSubscriptionMonthly()">
+                            <span>Monthly</span>
+                        </div>
+                    </div>
+                </div>
                 <div class="pay-button" onclick="window.location = \'nzia:qr/' . $order_sd_addr . '\'">
                     <span>Pay with</span>
                     <img src="' . $this->plugin_url() . "/assets/images/logo_text.png" . '" />
@@ -377,18 +510,6 @@ class WC_Gateway_IslandPaySD extends WC_Payment_Gateway
                 </div>
 			</div>
 		</div>';
-
-        $check_order_url = $this->response_url; // http://yoursite.com/?wc-api=CALLBACK
-
-        // both http://yoursite.com/?wc-api=CALLBACK or http://yoursite.com/wc-api/CALLBACK/ is valid
-        if (strrpos($check_order_url, '?') === false) {
-            $check_order_url .= '?check_status=1&oid=' . $order_id;
-        } else {
-            $check_order_url .= '&check_status=1&oid=' . $order_id;
-        }
-
-        $order_received_url         = $order->get_checkout_order_received_url();
-        $order_checkout_payment_url = $order->get_checkout_payment_url(true);
 
         $polling_script = '';
         if (in_array($order->get_status(), array('pending', 'failed'))) {
@@ -507,7 +628,7 @@ class WC_Gateway_IslandPaySD extends WC_Payment_Gateway
         
         if (!is_wp_error($res) && wp_remote_retrieve_response_code($res) == 200) {
             $islandpay_order = json_decode(wp_remote_retrieve_body($res));
-            $this->successful_request($order, $islandpay_order);
+            $this->successful_request($order_id, $order, $islandpay_order);
         } else {
             if (is_wp_error($res)) {
                 $this->log($res->get_error_code() . ' - ' . $res->get_error_message());
@@ -537,6 +658,7 @@ class WC_Gateway_IslandPaySD extends WC_Payment_Gateway
             $order    = wc_get_order($order_id);
             // if the order is not pending or failed then we can stop polling
             if (!in_array($order->get_status(), array('pending', 'failed'))) {
+                $this->check_subscription($order_id, $order);
                 $this->exit_with_json_result($order->get_status(), false);
             } else {
                 // poll Island Pay servers directly every 5 seconds
@@ -547,6 +669,29 @@ class WC_Gateway_IslandPaySD extends WC_Payment_Gateway
                 }
             }
             $this->exit_with_json_result($order->get_status(), true);
+        } elseif (isset($_GET['subscription']) && $_GET['recurrency']) {
+            $order_id = (int) $_GET['oid'];
+            $order = wc_get_order($order_id);
+            $order_code = get_post_meta($order_id, 'islandpay_transaction', true);
+            if (empty($order_code)) {
+                status_header(400);
+                print wp_json_encode(
+                    array(
+                        'status'           => 'can\'t find order',
+                    )
+                );
+                exit;
+            }
+
+            $recurrency = (int) $_GET['recurrency'];
+            update_post_meta($order_id, 'islandpay_subscription', $recurrency);
+
+            print wp_json_encode(
+                array(
+                    'status'              => 'success'
+                )
+            );
+            exit;
         } else {
             // FROM ISLAND PAY FOR NOTIFICATIONS
             $_POST = stripslashes_deep($_POST);
@@ -577,14 +722,64 @@ class WC_Gateway_IslandPaySD extends WC_Payment_Gateway
     }
 
     /**
+     * Check Subscription
+     */
+    function check_subscription($order_id, $order)
+    {
+        $order_code = get_post_meta($order_id, 'islandpay_transaction', true);
+        $recur = get_post_meta($order_id, 'islandpay_subscription', true);
+
+        if (!empty($recur)) {
+            $recurrency = intval($recur);
+
+            if ($recurrency > 0) {
+
+                $headers = array(
+                    'Content-Type'    => 'application/json',
+                );
+
+                $api_url = $this->api_endpoint() . '/orders/' . $order_code . '/subscribe';
+
+                $merchant_account_id = $this->settings['merchant_account_id'];
+                $device_id           = $this->settings['device_id'];
+                $pin                 = $this->settings['pin'];
+
+                $body = array(
+                    'merchant_account_id' => $merchant_account_id,
+                    'device_id'           => $device_id,
+                    'pin'                 => $pin,
+                    'recurrency'          => $recurrency,
+                    'active'              => true
+                );
+
+                $args = array(
+                    'headers' => $headers,
+                    'body'    => json_encode($body),
+                    'timeout' => 60,
+                    'method'  => 'POST'
+                );
+
+                wp_remote_request($api_url, $args);
+
+                if (!is_wp_error($res) && wp_remote_retrieve_response_code($res) == 204) {
+                    $subscription_result = json_decode(wp_remote_retrieve_body($res));
+                    $success = $subscription_result->status;
+                } else {
+                    $success = false;
+                }
+            }
+        }
+    }
+
+    /**
      * Successful Payment
      *
      * @param $payload
      */
-    function successful_request($order, $islandpay_order)
+    function successful_request($order_id, $order, $islandpay_order)
     {
         // Island Pay services uses word 'finalished' for a finalized order
-        if ('finalished' === $islandpay_order->status || 'Finalished' === $islandpay_order->status)
+        if ('finalished' === strtolower($islandpay_order->status))
         {
             if (!in_array($order->get_status(), array('completed', 'processing')))
             {
