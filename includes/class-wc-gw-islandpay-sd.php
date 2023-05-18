@@ -9,7 +9,7 @@
  */
 class WC_Gateway_IslandPaySD extends WC_Payment_Gateway
 {
-    public $version = '1.0.0';
+    public $version = '1.0.1';
 
     public function __construct()
     {
@@ -44,6 +44,11 @@ class WC_Gateway_IslandPaySD extends WC_Payment_Gateway
         $this->debug = false;
         if (isset($this->settings['debug']) && 'yes' == $this->settings['debug']) {
             $this->debug = true;
+        }
+        // Allow subscriptions.
+        $this->allow_subscriptions = false;
+        if (isset($this->settings['allow_subscriptions']) && 'yes' == $this->settings['allow_subscriptions']) {
+            $this->allow_subscriptions = true;
         }
 
         if (class_exists('WC_Logger')) {
@@ -140,6 +145,11 @@ class WC_Gateway_IslandPaySD extends WC_Payment_Gateway
                 'type'        => 'checkbox',
                 'default'     => 'no',
                 'description' => 'Test mode enables you to test payments using the sandbox environment before going live.',
+            ),
+            'allow_subscriptions' => array(
+                'title'       => __('Allow Subscriptions', 'wc-gw-islandpay'),
+                'type'        => 'checkbox',
+                'default'     => 'no'
             ),
             'debug' => array(
                 'title'       => __('Debug Log', 'wc-gw-islandpay-sd'),
@@ -477,7 +487,10 @@ class WC_Gateway_IslandPaySD extends WC_Payment_Gateway
                     },"json");
                 }
             </script>
-            <div id="islandpay-widget" style="margin:0 auto;text-align: center; border:none">
+            <div id="islandpay-widget" style="margin:0 auto;text-align: center; border:none">';
+
+        if ($this->allow_subscriptions) {
+        print '
                 <div class="subscription">
                     Do you want to subscribe this order?
                     <div class="subscription-buttons">
@@ -494,7 +507,10 @@ class WC_Gateway_IslandPaySD extends WC_Payment_Gateway
                             <span>Monthly</span>
                         </div>
                     </div>
-                </div>
+                </div>';
+        }
+    
+        print '
                 <div class="pay-button" onclick="window.location = \'nzia:qr/' . $order_sd_addr . '\'">
                     <span>Pay with</span>
                     <img src="' . $this->plugin_url() . "/assets/images/logo_text.png" . '" />
